@@ -1,0 +1,2121 @@
+{
+  "name": "AI Ad Creative Strategist (Foreplay + SORA)",
+  "nodes": [
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 2
+          },
+          "conditions": [
+            {
+              "id": "14a0a321-9663-4d87-b8c7-2c3a8afa4d10",
+              "leftValue": "={{ $json.running_duration.days }}",
+              "rightValue": 30,
+              "operator": {
+                "type": "number",
+                "operation": "gt"
+              }
+            },
+            {
+              "id": "7965b8ae-102b-4486-9e80-5e206a935c1b",
+              "leftValue": "={{ $json.running_duration.days }}",
+              "rightValue": 60,
+              "operator": {
+                "type": "number",
+                "operation": "lt"
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.filter",
+      "typeVersion": 2.2,
+      "position": [
+        -1248,
+        240
+      ],
+      "id": "5b085565-d110-41fe-834e-bc5e1bf23e96",
+      "name": "Filter"
+    },
+    {
+      "parameters": {
+        "jsCode": "return $input.first().json.data"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        -1440,
+        240
+      ],
+      "id": "cf7a5a7d-6356-4349-986c-f6389e13ecb3",
+      "name": "Get Ads"
+    },
+    {
+      "parameters": {
+        "jsCode": "const segments = ($input.first().json.timestamped_transcription) ?? [];\nconst out = [];\n\nconst mergedSentence = segments\n  .map(seg => typeof seg?.sentence === 'string' ? seg.sentence.trim() : '')\n  .filter(Boolean)\n  .join(' ')\n  .replace(/\\s+([,.!?;:])/g, '$1') // tidy spacing before punctuation\n  .replace(/\\s{2,}/g, ' ')         // remove double spaces\n  .trim();\n\nout.push({\n  json: {\n    mergedSentence,\n    segmentCount: segments.length\n  }\n});\n\nreturn out;\n"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        -848,
+        256
+      ],
+      "id": "f7ce1256-1d4e-4efb-a567-f39cd9cfff80",
+      "name": "Get the Transcripts"
+    },
+    {
+      "parameters": {
+        "options": {
+          "reset": false
+        }
+      },
+      "type": "n8n-nodes-base.splitInBatches",
+      "typeVersion": 3,
+      "position": [
+        -1040,
+        240
+      ],
+      "id": "6f61ff25-0020-4a9e-af44-d5d907a9f82c",
+      "name": "Loop Over Items"
+    },
+    {
+      "parameters": {
+        "rule": {
+          "interval": [
+            {
+              "triggerAtHour": 8
+            }
+          ]
+        }
+      },
+      "type": "n8n-nodes-base.scheduleTrigger",
+      "typeVersion": 1.2,
+      "position": [
+        -1760,
+        240
+      ],
+      "id": "dbc73f0a-d4eb-41dc-bc85-94507a52fdb2",
+      "name": "Daily Trigger1"
+    },
+    {
+      "parameters": {
+        "url": "https://public.api.foreplay.co/api/brand/getAdsByBrandId",
+        "sendQuery": true,
+        "queryParameters": {
+          "parameters": [
+            {
+              "name": "brand_ids",
+              "value": "pcOilWPKMILBqVy6kwM0"
+            },
+            {
+              "name": "limit",
+              "value": "50"
+            },
+            {
+              "name": "order",
+              "value": "longest_running"
+            },
+            {
+              "name": "live",
+              "value": "true"
+            },
+            {
+              "name": "languages",
+              "value": "english"
+            },
+            {
+              "name": "display_format",
+              "value": "video"
+            }
+          ]
+        },
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Authorization",
+              "value": "=N0JQjY-dQUjS7V8d_rWArkLph3aK2bm0y1RB_kn-Uvo3py1i5g9E2jk8fsTx8fCZI_Qb6iHe5zWebSALsVYgzg"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        -1600,
+        240
+      ],
+      "id": "40c70bc2-835d-46c0-ab58-81bc567ddf6b",
+      "name": "Competitor #"
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://api.openai.com/v1/videos",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Authorization",
+              "value": "Bearer {{ $env.OPENAI_API_KEY }}"
+            }
+          ]
+        },
+        "sendBody": true,
+        "contentType": "multipart-form-data",
+        "bodyParameters": {
+          "parameters": [
+            {
+              "name": "model",
+              "value": "sora-2"
+            },
+            {
+              "name": "prompt",
+              "value": "={{ $json.output }}"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        112,
+        256
+      ],
+      "id": "744ca92c-aebf-4546-a26f-f8fc5c7a375e",
+      "name": "SORA 2 Video Generation1"
+    },
+    {
+      "parameters": {
+        "operation": "create",
+        "base": {
+          "__rl": true,
+          "value": "appQ3yB8XKm5v0QSN",
+          "mode": "list",
+          "cachedResultName": "RSS Content Hub ",
+          "cachedResultUrl": "https://airtable.com/appQ3yB8XKm5v0QSN"
+        },
+        "table": {
+          "__rl": true,
+          "value": "tblBZ3iZlxwGNXfox",
+          "mode": "list",
+          "cachedResultName": "Ecom brand info v1",
+          "cachedResultUrl": "https://airtable.com/appQ3yB8XKm5v0QSN/tblBZ3iZlxwGNXfox"
+        },
+        "columns": {
+          "mappingMode": "defineBelow",
+          "value": {},
+          "matchingColumns": [],
+          "schema": [
+            {
+              "id": "brand_name",
+              "displayName": "brand_name",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "string",
+              "readOnly": false,
+              "removed": false
+            },
+            {
+              "id": "short_name",
+              "displayName": "short_name",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "string",
+              "readOnly": false,
+              "removed": false
+            },
+            {
+              "id": "product_category",
+              "displayName": "product_category",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "string",
+              "readOnly": false,
+              "removed": false
+            },
+            {
+              "id": "positioning_sentence",
+              "displayName": "positioning_sentence",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "string",
+              "readOnly": false,
+              "removed": false
+            },
+            {
+              "id": "tagline_primary",
+              "displayName": "tagline_primary",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "string",
+              "readOnly": false,
+              "removed": false
+            },
+            {
+              "id": "tagline_secondary",
+              "displayName": "tagline_secondary",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "string",
+              "readOnly": false,
+              "removed": false
+            },
+            {
+              "id": "mission",
+              "displayName": "mission",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "string",
+              "readOnly": false,
+              "removed": false
+            },
+            {
+              "id": "value_props",
+              "displayName": "value_props",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "string",
+              "readOnly": false,
+              "removed": false
+            },
+            {
+              "id": "benefit_buckets.energy_focus",
+              "displayName": "benefit_buckets.energy_focus",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "string",
+              "readOnly": false,
+              "removed": false
+            },
+            {
+              "id": "benefit_buckets.gut_health",
+              "displayName": "benefit_buckets.gut_health",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "string",
+              "readOnly": false,
+              "removed": false
+            },
+            {
+              "id": "benefit_buckets.immune_defense",
+              "displayName": "benefit_buckets.immune_defense",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "string",
+              "readOnly": false,
+              "removed": false
+            },
+            {
+              "id": "benefit_buckets.recovery_adapt",
+              "displayName": "benefit_buckets.recovery_adapt",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "string",
+              "readOnly": false,
+              "removed": false
+            },
+            {
+              "id": "benefit_buckets.greens_micronutrients",
+              "displayName": "benefit_buckets.greens_micronutrients",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "string",
+              "readOnly": false,
+              "removed": false
+            },
+            {
+              "id": "tone_of_voice.pillars",
+              "displayName": "tone_of_voice.pillars",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "string",
+              "readOnly": false,
+              "removed": false
+            },
+            {
+              "id": "tone_of_voice.do",
+              "displayName": "tone_of_voice.do",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "string",
+              "readOnly": false,
+              "removed": false
+            },
+            {
+              "id": "tone_of_voice.avoid",
+              "displayName": "tone_of_voice.avoid",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "string",
+              "readOnly": false,
+              "removed": false
+            },
+            {
+              "id": "tone_of_voice.personality_reference",
+              "displayName": "tone_of_voice.personality_reference",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "string",
+              "readOnly": false,
+              "removed": false
+            },
+            {
+              "id": "brand_story_blurbs.thirty_words",
+              "displayName": "brand_story_blurbs.thirty_words",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "string",
+              "readOnly": false,
+              "removed": false
+            },
+            {
+              "id": "brand_story_blurbs.sixty_words",
+              "displayName": "brand_story_blurbs.sixty_words",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "string",
+              "readOnly": false,
+              "removed": false
+            },
+            {
+              "id": "visual_identity.logo_style",
+              "displayName": "visual_identity.logo_style",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "string",
+              "readOnly": false,
+              "removed": false
+            },
+            {
+              "id": "visual_identity.wordmark",
+              "displayName": "visual_identity.wordmark",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "string",
+              "readOnly": false,
+              "removed": false
+            },
+            {
+              "id": "visual_identity.monogram",
+              "displayName": "visual_identity.monogram",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "string",
+              "readOnly": false,
+              "removed": false
+            },
+            {
+              "id": "visual_identity.typography.primary.name",
+              "displayName": "visual_identity.typography.primary.name",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "string",
+              "readOnly": false,
+              "removed": false
+            },
+            {
+              "id": "visual_identity.typography.primary.roles",
+              "displayName": "visual_identity.typography.primary.roles",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "array",
+              "options": [
+                {
+                  "name": "UI headings",
+                  "value": "UI headings"
+                },
+                {
+                  "name": "navigation",
+                  "value": "navigation"
+                },
+                {
+                  "name": "numeric data",
+                  "value": "numeric data"
+                }
+              ],
+              "readOnly": false,
+              "removed": false
+            },
+            {
+              "id": "visual_identity.typography.primary.weights",
+              "displayName": "visual_identity.typography.primary.weights",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "string",
+              "readOnly": false,
+              "removed": false
+            },
+            {
+              "id": "visual_identity.typography.secondary.name",
+              "displayName": "visual_identity.typography.secondary.name",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "string",
+              "readOnly": false,
+              "removed": false
+            },
+            {
+              "id": "visual_identity.typography.secondary.roles",
+              "displayName": "visual_identity.typography.secondary.roles",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "string",
+              "readOnly": false,
+              "removed": false
+            },
+            {
+              "id": "visual_identity.typography.secondary.weights",
+              "displayName": "visual_identity.typography.secondary.weights",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "string",
+              "readOnly": false,
+              "removed": false
+            },
+            {
+              "id": "visual_identity.typography.accent.name",
+              "displayName": "visual_identity.typography.accent.name",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "string",
+              "readOnly": false,
+              "removed": false
+            },
+            {
+              "id": "visual_identity.typography.accent.roles",
+              "displayName": "visual_identity.typography.accent.roles",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "array",
+              "options": [
+                {
+                  "name": "Ingredients",
+                  "value": "Ingredients"
+                },
+                {
+                  "name": "lab data",
+                  "value": "lab data"
+                },
+                {
+                  "name": "lot numbers",
+                  "value": "lot numbers"
+                }
+              ],
+              "readOnly": false,
+              "removed": false
+            },
+            {
+              "id": "visual_identity.typography.accent.weights",
+              "displayName": "visual_identity.typography.accent.weights",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "number",
+              "readOnly": false,
+              "removed": false
+            },
+            {
+              "id": "visual_identity.typography.rules",
+              "displayName": "visual_identity.typography.rules",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "string",
+              "readOnly": false,
+              "removed": false
+            },
+            {
+              "id": "visual_identity.color_palette.core.deep_forest",
+              "displayName": "visual_identity.color_palette.core.deep_forest",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "string",
+              "readOnly": false,
+              "removed": false
+            },
+            {
+              "id": "visual_identity.color_palette.core.ritual_green",
+              "displayName": "visual_identity.color_palette.core.ritual_green",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "string",
+              "readOnly": false,
+              "removed": false
+            },
+            {
+              "id": "visual_identity.color_palette.core.leaf_mid",
+              "displayName": "visual_identity.color_palette.core.leaf_mid",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "string",
+              "readOnly": false,
+              "removed": false
+            },
+            {
+              "id": "visual_identity.color_palette.core.matcha_pale",
+              "displayName": "visual_identity.color_palette.core.matcha_pale",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "string",
+              "readOnly": false,
+              "removed": false
+            },
+            {
+              "id": "visual_identity.color_palette.core.matte_charcoal",
+              "displayName": "visual_identity.color_palette.core.matte_charcoal",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "dateTime",
+              "readOnly": false,
+              "removed": false
+            },
+            {
+              "id": "visual_identity.color_palette.core.paper_white",
+              "displayName": "visual_identity.color_palette.core.paper_white",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "string",
+              "readOnly": false,
+              "removed": false
+            },
+            {
+              "id": "visual_identity.color_palette.accents.electro_lime",
+              "displayName": "visual_identity.color_palette.accents.electro_lime",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "string",
+              "readOnly": false,
+              "removed": false
+            },
+            {
+              "id": "visual_identity.color_palette.accents.mineral_blue",
+              "displayName": "visual_identity.color_palette.accents.mineral_blue",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "string",
+              "readOnly": false,
+              "removed": false
+            },
+            {
+              "id": "visual_identity.color_palette.usage",
+              "displayName": "visual_identity.color_palette.usage",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "string",
+              "readOnly": false,
+              "removed": false
+            },
+            {
+              "id": "visual_identity.iconography",
+              "displayName": "visual_identity.iconography",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "string",
+              "readOnly": false,
+              "removed": false
+            },
+            {
+              "id": "visual_identity.photography.style",
+              "displayName": "visual_identity.photography.style",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "string",
+              "readOnly": false,
+              "removed": false
+            },
+            {
+              "id": "visual_identity.photography.subjects",
+              "displayName": "visual_identity.photography.subjects",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "string",
+              "readOnly": false,
+              "removed": false
+            },
+            {
+              "id": "visual_identity.motion.rules",
+              "displayName": "visual_identity.motion.rules",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "string",
+              "readOnly": false,
+              "removed": false
+            },
+            {
+              "id": "packaging_system.primary_canister.format",
+              "displayName": "packaging_system.primary_canister.format",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "string",
+              "readOnly": false,
+              "removed": false
+            },
+            {
+              "id": "packaging_system.primary_canister.dimensions_mm.height",
+              "displayName": "packaging_system.primary_canister.dimensions_mm.height",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "number",
+              "readOnly": false,
+              "removed": false
+            },
+            {
+              "id": "packaging_system.primary_canister.dimensions_mm.diameter",
+              "displayName": "packaging_system.primary_canister.dimensions_mm.diameter",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "number",
+              "readOnly": false,
+              "removed": false
+            },
+            {
+              "id": "packaging_system.primary_canister.finish",
+              "displayName": "packaging_system.primary_canister.finish",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "string",
+              "readOnly": false,
+              "removed": false
+            },
+            {
+              "id": "packaging_system.primary_canister.base_color",
+              "displayName": "packaging_system.primary_canister.base_color",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "string",
+              "readOnly": false,
+              "removed": false
+            },
+            {
+              "id": "packaging_system.primary_canister.graphics",
+              "displayName": "packaging_system.primary_canister.graphics",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "string",
+              "readOnly": false,
+              "removed": false
+            },
+            {
+              "id": "packaging_system.primary_canister.labeling.front_claims",
+              "displayName": "packaging_system.primary_canister.labeling.front_claims",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "string",
+              "readOnly": false,
+              "removed": false
+            },
+            {
+              "id": "packaging_system.primary_canister.labeling.side_panel",
+              "displayName": "packaging_system.primary_canister.labeling.side_panel",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "string",
+              "readOnly": false,
+              "removed": false
+            },
+            {
+              "id": "packaging_system.primary_canister.labeling.regulatory",
+              "displayName": "packaging_system.primary_canister.labeling.regulatory",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "string",
+              "readOnly": false,
+              "removed": false
+            },
+            {
+              "id": "packaging_system.primary_canister.labeling.serialization.lot_code_format",
+              "displayName": "packaging_system.primary_canister.labeling.serialization.lot_code_format",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "string",
+              "readOnly": false,
+              "removed": false
+            },
+            {
+              "id": "packaging_system.primary_canister.labeling.serialization.qr_payload",
+              "displayName": "packaging_system.primary_canister.labeling.serialization.qr_payload",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "string",
+              "readOnly": false,
+              "removed": false
+            },
+            {
+              "id": "packaging_system.refill_pouch.format",
+              "displayName": "packaging_system.refill_pouch.format",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "string",
+              "readOnly": false,
+              "removed": false
+            },
+            {
+              "id": "packaging_system.refill_pouch.size_options",
+              "displayName": "packaging_system.refill_pouch.size_options",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "string",
+              "readOnly": false,
+              "removed": false
+            },
+            {
+              "id": "packaging_system.refill_pouch.finish",
+              "displayName": "packaging_system.refill_pouch.finish",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "string",
+              "readOnly": false,
+              "removed": false
+            },
+            {
+              "id": "packaging_system.refill_pouch.base_color",
+              "displayName": "packaging_system.refill_pouch.base_color",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "string",
+              "readOnly": false,
+              "removed": false
+            },
+            {
+              "id": "packaging_system.refill_pouch.graphics",
+              "displayName": "packaging_system.refill_pouch.graphics",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "string",
+              "readOnly": false,
+              "removed": false
+            },
+            {
+              "id": "packaging_system.refill_pouch.sustainability_note",
+              "displayName": "packaging_system.refill_pouch.sustainability_note",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "string",
+              "readOnly": false,
+              "removed": false
+            },
+            {
+              "id": "packaging_system.single_serve_sachets.format",
+              "displayName": "packaging_system.single_serve_sachets.format",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "string",
+              "readOnly": false,
+              "removed": false
+            },
+            {
+              "id": "packaging_system.single_serve_sachets.count",
+              "displayName": "packaging_system.single_serve_sachets.count",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "number",
+              "readOnly": false,
+              "removed": false
+            },
+            {
+              "id": "packaging_system.single_serve_sachets.finish",
+              "displayName": "packaging_system.single_serve_sachets.finish",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "string",
+              "readOnly": false,
+              "removed": false
+            },
+            {
+              "id": "packaging_system.single_serve_sachets.base_color",
+              "displayName": "packaging_system.single_serve_sachets.base_color",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "string",
+              "readOnly": false,
+              "removed": false
+            },
+            {
+              "id": "packaging_system.single_serve_sachets.print",
+              "displayName": "packaging_system.single_serve_sachets.print",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "array",
+              "options": [
+                {
+                  "name": "DF1 monogram left",
+                  "value": "DF1 monogram left"
+                },
+                {
+                  "name": "scoop icon right",
+                  "value": "scoop icon right"
+                }
+              ],
+              "readOnly": false,
+              "removed": false
+            },
+            {
+              "id": "packaging_system.shipper_box.material",
+              "displayName": "packaging_system.shipper_box.material",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "string",
+              "readOnly": false,
+              "removed": false
+            },
+            {
+              "id": "packaging_system.shipper_box.print",
+              "displayName": "packaging_system.shipper_box.print",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "string",
+              "readOnly": false,
+              "removed": false
+            },
+            {
+              "id": "packaging_system.shipper_box.cta_inside_flap",
+              "displayName": "packaging_system.shipper_box.cta_inside_flap",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "string",
+              "readOnly": false,
+              "removed": false
+            },
+            {
+              "id": "packaging_system.scoop.material",
+              "displayName": "packaging_system.scoop.material",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "string",
+              "readOnly": false,
+              "removed": false
+            },
+            {
+              "id": "packaging_system.scoop.color",
+              "displayName": "packaging_system.scoop.color",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "string",
+              "readOnly": false,
+              "removed": false
+            },
+            {
+              "id": "packaging_system.scoop.emboss",
+              "displayName": "packaging_system.scoop.emboss",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "string",
+              "readOnly": false,
+              "removed": false
+            },
+            {
+              "id": "packaging_system.scoop.volume",
+              "displayName": "packaging_system.scoop.volume",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "string",
+              "readOnly": false,
+              "removed": false
+            },
+            {
+              "id": "packaging_system.shaker_bottle.material",
+              "displayName": "packaging_system.shaker_bottle.material",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "string",
+              "readOnly": false,
+              "removed": false
+            },
+            {
+              "id": "packaging_system.shaker_bottle.volume_ml",
+              "displayName": "packaging_system.shaker_bottle.volume_ml",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "number",
+              "readOnly": false,
+              "removed": false
+            },
+            {
+              "id": "packaging_system.shaker_bottle.body_color",
+              "displayName": "packaging_system.shaker_bottle.body_color",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "string",
+              "readOnly": false,
+              "removed": false
+            },
+            {
+              "id": "packaging_system.shaker_bottle.lid_color",
+              "displayName": "packaging_system.shaker_bottle.lid_color",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "string",
+              "readOnly": false,
+              "removed": false
+            },
+            {
+              "id": "packaging_system.shaker_bottle.print",
+              "displayName": "packaging_system.shaker_bottle.print",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "string",
+              "readOnly": false,
+              "removed": false
+            },
+            {
+              "id": "packaging_system.shaker_bottle.strainer",
+              "displayName": "packaging_system.shaker_bottle.strainer",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "string",
+              "readOnly": false,
+              "removed": false
+            },
+            {
+              "id": "copy_blocks.homepage_hero.headline",
+              "displayName": "copy_blocks.homepage_hero.headline",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "string",
+              "readOnly": false,
+              "removed": false
+            },
+            {
+              "id": "copy_blocks.homepage_hero.subhead",
+              "displayName": "copy_blocks.homepage_hero.subhead",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "string",
+              "readOnly": false,
+              "removed": false
+            },
+            {
+              "id": "copy_blocks.homepage_hero.cta_primary",
+              "displayName": "copy_blocks.homepage_hero.cta_primary",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "string",
+              "readOnly": false,
+              "removed": false
+            },
+            {
+              "id": "copy_blocks.homepage_hero.cta_secondary",
+              "displayName": "copy_blocks.homepage_hero.cta_secondary",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "string",
+              "readOnly": false,
+              "removed": false
+            },
+            {
+              "id": "copy_blocks.how_it_works",
+              "displayName": "copy_blocks.how_it_works",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "string",
+              "readOnly": false,
+              "removed": false
+            },
+            {
+              "id": "copy_blocks.label_callouts",
+              "displayName": "copy_blocks.label_callouts",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "string",
+              "readOnly": false,
+              "removed": false
+            },
+            {
+              "id": "copy_blocks.directions_panel",
+              "displayName": "copy_blocks.directions_panel",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "string",
+              "readOnly": false,
+              "removed": false
+            },
+            {
+              "id": "copy_blocks.disclaimer",
+              "displayName": "copy_blocks.disclaimer",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "string",
+              "readOnly": false,
+              "removed": false
+            },
+            {
+              "id": "commerce.skus",
+              "displayName": "commerce.skus",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "string",
+              "readOnly": false,
+              "removed": false
+            },
+            {
+              "id": "commerce.bundle_rules",
+              "displayName": "commerce.bundle_rules",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "string",
+              "readOnly": false,
+              "removed": false
+            },
+            {
+              "id": "commerce.subscription.default_frequency_days",
+              "displayName": "commerce.subscription.default_frequency_days",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "number",
+              "readOnly": false,
+              "removed": false
+            },
+            {
+              "id": "commerce.subscription.options_days",
+              "displayName": "commerce.subscription.options_days",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "string",
+              "readOnly": false,
+              "removed": false
+            },
+            {
+              "id": "commerce.subscription.discount_percent",
+              "displayName": "commerce.subscription.discount_percent",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "number",
+              "readOnly": false,
+              "removed": false
+            },
+            {
+              "id": "commerce.subscription.copy",
+              "displayName": "commerce.subscription.copy",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "string",
+              "readOnly": false,
+              "removed": false
+            },
+            {
+              "id": "qa_testing.third_party",
+              "displayName": "qa_testing.third_party",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "string",
+              "readOnly": false,
+              "removed": false
+            },
+            {
+              "id": "qa_testing.panels",
+              "displayName": "qa_testing.panels",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "string",
+              "readOnly": false,
+              "removed": false
+            },
+            {
+              "id": "ingredient_sourcing.traceability",
+              "displayName": "ingredient_sourcing.traceability",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "string",
+              "readOnly": false,
+              "removed": false
+            },
+            {
+              "id": "ingredient_sourcing.sweetener",
+              "displayName": "ingredient_sourcing.sweetener",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "string",
+              "readOnly": false,
+              "removed": false
+            },
+            {
+              "id": "ingredient_sourcing.flavor_profile",
+              "displayName": "ingredient_sourcing.flavor_profile",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "string",
+              "readOnly": false,
+              "removed": false
+            },
+            {
+              "id": "ingredient_sourcing.colorant",
+              "displayName": "ingredient_sourcing.colorant",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "string",
+              "readOnly": false,
+              "removed": false
+            },
+            {
+              "id": "ingredient_sourcing.allergen_statement",
+              "displayName": "ingredient_sourcing.allergen_statement",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "string",
+              "readOnly": false,
+              "removed": false
+            },
+            {
+              "id": "digital_assets.file_naming.images",
+              "displayName": "digital_assets.file_naming.images",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "string",
+              "readOnly": false,
+              "removed": false
+            },
+            {
+              "id": "digital_assets.file_naming.labels",
+              "displayName": "digital_assets.file_naming.labels",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "string",
+              "readOnly": false,
+              "removed": false
+            },
+            {
+              "id": "digital_assets.file_naming.renders",
+              "displayName": "digital_assets.file_naming.renders",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "string",
+              "readOnly": false,
+              "removed": false
+            },
+            {
+              "id": "digital_assets.hero_render_specs.canister",
+              "displayName": "digital_assets.hero_render_specs.canister",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "string",
+              "readOnly": false,
+              "removed": false
+            },
+            {
+              "id": "digital_assets.hero_render_specs.shaker",
+              "displayName": "digital_assets.hero_render_specs.shaker",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "string",
+              "readOnly": false,
+              "removed": false
+            },
+            {
+              "id": "digital_assets.hero_render_specs.powder",
+              "displayName": "digital_assets.hero_render_specs.powder",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "string",
+              "readOnly": false,
+              "removed": false
+            },
+            {
+              "id": "ad_snippets.six_seconds",
+              "displayName": "ad_snippets.six_seconds",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "string",
+              "readOnly": false,
+              "removed": false
+            },
+            {
+              "id": "ad_snippets.fifteen_seconds",
+              "displayName": "ad_snippets.fifteen_seconds",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "string",
+              "readOnly": false,
+              "removed": false
+            },
+            {
+              "id": "ad_snippets.thirty_seconds",
+              "displayName": "ad_snippets.thirty_seconds",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "string",
+              "readOnly": false,
+              "removed": false
+            },
+            {
+              "id": "ux_rules.cta_label",
+              "displayName": "ux_rules.cta_label",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "string",
+              "readOnly": false,
+              "removed": false
+            },
+            {
+              "id": "ux_rules.form_fields",
+              "displayName": "ux_rules.form_fields",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "string",
+              "readOnly": false,
+              "removed": false
+            },
+            {
+              "id": "ux_rules.error_style",
+              "displayName": "ux_rules.error_style",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "string",
+              "readOnly": false,
+              "removed": false
+            },
+            {
+              "id": "ux_rules.accessibility",
+              "displayName": "ux_rules.accessibility",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "string",
+              "readOnly": false,
+              "removed": false
+            },
+            {
+              "id": "automation_hints.entities",
+              "displayName": "automation_hints.entities",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "string",
+              "readOnly": false,
+              "removed": false
+            },
+            {
+              "id": "automation_hints.regex.lot_code",
+              "displayName": "automation_hints.regex.lot_code",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "string",
+              "readOnly": false,
+              "removed": false
+            },
+            {
+              "id": "automation_hints.placeholders.qr_base",
+              "displayName": "automation_hints.placeholders.qr_base",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "string",
+              "readOnly": false,
+              "removed": false
+            },
+            {
+              "id": "automation_hints.placeholders.upc",
+              "displayName": "automation_hints.placeholders.upc",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "string",
+              "readOnly": false,
+              "removed": false
+            },
+            {
+              "id": "legal.trademark_note",
+              "displayName": "legal.trademark_note",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "string",
+              "readOnly": false,
+              "removed": false
+            },
+            {
+              "id": "legal.comparative_statement",
+              "displayName": "legal.comparative_statement",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "string",
+              "readOnly": false,
+              "removed": false
+            },
+            {
+              "id": "raw_json",
+              "displayName": "raw_json",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "string",
+              "readOnly": false,
+              "removed": false
+            }
+          ],
+          "attemptToConvertTypes": false,
+          "convertFieldsToString": false
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.airtable",
+      "typeVersion": 2,
+      "position": [
+        448,
+        224
+      ],
+      "id": "6a89b88d-c328-4be5-a1de-5d45d8314e54",
+      "name": "Log to Airtable1",
+      "credentials": {
+        "airtableTokenApi": {
+          "id": "nvGoYm8W5OXPhY3Q",
+          "name": "xyz"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "select": "channel",
+        "channelId": {
+          "__rl": true,
+          "value": "C0846E6JAMT",
+          "mode": "list"
+        },
+        "text": "=🎬 New AI-Generated Ad Created & Deployed to Meta!\n\n✅ SORA Video Generated\n✅ Uploaded to Meta\n✅ Ad Creative Created\n✅ Ad Created (PAUSED for review)\n\n*Winning Ad Source:\nBrand: {{ $('AI Analysis (Claude)').item.json.brand_name }}\nRuntime: {{ $('AI Analysis (Claude)').item.json.runtime_days }} days\n\n*Generated Concept:\n{{ $('Generate New Ad Concept').item.json.content[0].text.match(/\"concept_title\":\\s*\"([^\"]+)\"/)?.[1] }}\n\n*Meta Ad ID:* {{ $('Create Meta Ad (Paused)1').item.json.id }}\n\n*Next Step:* Review the ad in Meta Ads Manager and activate when ready!",
+        "otherOptions": {}
+      },
+      "type": "n8n-nodes-base.slack",
+      "typeVersion": 2.3,
+      "position": [
+        448,
+        416
+      ],
+      "id": "469c8871-da8f-4914-92a5-7221069ca879",
+      "name": "Notify Team (Slack)1",
+      "webhookId": "9b081b6c-bfbe-4a92-b4d5-31a02ee6bbe1",
+      "credentials": {
+        "slackApi": {
+          "id": "ji3xuYHWpFkAiCCm",
+          "name": "Slack account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "model": {
+          "__rl": true,
+          "mode": "list",
+          "value": "claude-sonnet-4-20250514",
+          "cachedResultName": "Claude 4 Sonnet"
+        },
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.lmChatAnthropic",
+      "typeVersion": 1.3,
+      "position": [
+        -336,
+        432
+      ],
+      "id": "d7976adc-6f43-4707-8eb3-348904d7b9b0",
+      "name": "Anthropic Chat Model3",
+      "credentials": {
+        "anthropicApi": {
+          "id": "RtZhHruw0oj0Xy9A",
+          "name": "Anthropic account 2"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "promptType": "define",
+        "text": "=Brand Ad Adaptation Agent - Instructions\n\nYou are an expert ad strategist and video prompt engineer. Your task is to take the winning ad analysis and merge it with new brand data to create an optimized Sora 2 video generation prompt.\n\n## Your Inputs\n\nYou will receive two pieces of information:\n\n**INPUT 1: Winning Ad Analysis**\n{{ $json.content.parts[0].text }}\n\n**INPUT 2: Brand Data from Airtable**\ngrab everthing listed form the airtable data set connected to this node as a tool\n\n## Your Task\n\nAnalyze both inputs and create a detailed Sora 2 video generation prompt that:\n1. Maintains the WINNING STRUCTURE and STRATEGY from the original ad\n2. Seamlessly integrates the NEW BRAND identity\n3. Adapts messaging to fit the new product/service\n4. Preserves the elements that made the original ad successful\n\n## Output Structure\n\n### SORA 2 VIDEO GENERATION PROMPT\n\n**Video Specifications:**\n[Specify duration, aspect ratio, style based on winning ad format]\n\n**Scene-by-Scene Breakdown:**\n\n**Scene 1 (0:00-0:03) - The Hook:**\nVisual Description: [Detailed description of what should appear, incorporating new brand colors and style while maintaining the winning hook mechanism]\n\nCamera Direction: [Specific camera angles, movements, transitions]\n\nOn-Screen Text: [Exact text with brand-adapted messaging]\n\nMood/Atmosphere: [Tone, lighting, energy level]\n\n---\n\n**Scene 2 (0:03-0:06):**\n[Continue chronologically through each scene, maintaining the winning ad's structure but with new brand elements]\n\n---\n\n[Continue for all scenes...]\n\n---\n\n**Technical Style Parameters:**\n- Production Quality: [professional/UGC-style/hybrid - from winning ad]\n- Color Grading: [Specific direction using new brand colors]\n- Pacing: [fast/medium/slow - from winning ad]\n- Transitions: [Specific transition styles that worked]\n\n**Branding Integration:**\n- Logo Placement: [When and where to show the new brand logo]\n- Brand Color Usage: [How to incorporate {Brand Colors} throughout]\n- Visual Brand Elements: [Any specific brand assets to feature]\n\n**Audio Suggestions:**\n- Music Style: [Based on winning ad's tone]\n- Voiceover Direction: [Tone, pacing, energy - adapted for new brand voice]\n- Sound Effects: [Key moments needing emphasis]\n\n---\n\n### COMPLETE SORA 2 PROMPT OUTPUT:\n\n[Write the final, consolidated Sora 2 prompt in a single flowing format optimized for AI video generation. Include all scene descriptions, technical parameters, and brand elements in a format Sora 2 can interpret.]\n\n---\n\n## Critical Rules\n\n1. Maintain the chronological structure that made the original ad work\n2. Use the exact brand colors provided from Airtable data\n3. Adapt the value proposition to match the new product/service\n4. Keep the hook mechanism that worked in the original\n5. Ensure the CTA is brand-appropriate\n6. Use Sora 2-friendly descriptive language (visual, cinematic, specific)\n7. Be extremely detailed - Sora 2 needs clear visual direction\n8. Reference specific emotions, movements, and compositions\n9. Include transition cues between scenes\n10. Specify text overlays exactly as they should appear\n\n## Sora 2 Optimization Tips\n\n- Use cinematic language: \"camera slowly zooms in\", \"quick cut to\", \"smooth transition\"\n- Describe lighting: \"warm golden hour lighting\", \"bright, even studio lighting\"\n- Specify mood: \"energetic and vibrant\", \"calm and professional\"\n- Detail motion: \"product rotates smoothly\", \"person walks confidently toward camera\"\n- Include style references when helpful: \"shot on iPhone feel\", \"professional studio production\"\n\nNow merge the winning ad analysis with the brand data and create the Sora 2 prompt.\n\n**DONT PUT ANY INFORMATION IN THE OUTPUT BESIDES THE PROMPT LANGUAGE FOR THE AD PROMPT ITSELF**\n",
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.agent",
+      "typeVersion": 3,
+      "position": [
+        -272,
+        256
+      ],
+      "id": "9296d214-e48c-4099-bfff-50de8575c4aa",
+      "name": "Create  New Winning Ad1"
+    },
+    {
+      "parameters": {
+        "resource": "video",
+        "operation": "analyze",
+        "modelId": {
+          "__rl": true,
+          "value": "models/gemini-2.5-pro",
+          "mode": "list",
+          "cachedResultName": "models/gemini-2.5-pro"
+        },
+        "text": "# Ad Analysis Agent - Instructions\n\nYou are an expert ad analyst. Your task is to dissect the provided video/image ad and extract all strategic elements that make it effective. Provide a comprehensive plain text analysis that can be used to recreate a similar winning ad for a different brand.\n\n## Analysis Structure\n\n### 1. AD OVERVIEW\nStart with:\n- Format (video/static image)\n- Duration (if video)\n- Platform it's optimized for\n- Overall production style\n\n### 2. CHRONOLOGICAL BREAKDOWN\nWalk through the ad second-by-second (or frame-by-frame for static images):\n- What's happening visually at each moment\n- What's being said or written\n- Why this sequence matters strategically\n- How each section builds on the previous\n\n### 3. VISUAL DESIGN ANALYSIS\n\n**Color Palette:**\n- List all dominant colors (provide hex codes if possible)\n- Note accent colors and where they appear\n- Explain the color psychology at play\n- How colors support the brand message\n\n**Typography:**\n- Font styles used (serif, sans-serif, script, etc.)\n- How text hierarchy guides the eye\n- Size relationships and readability\n- When and where text appears\n\n**Composition & Layout:**\n- How elements are arranged on screen\n- Focal points and visual flow\n- Use of negative space\n- Framing techniques\n\n**Motion & Animation** (if video):\n- Transition styles between scenes\n- Pacing (fast/slow)\n- Special effects or overlays\n- Camera movements or cuts\n\n### 4. MESSAGING & COPY ANALYSIS\n\n**The Hook:**\n- Exact first 3 seconds breakdown\n- What grabs attention immediately\n- Why it stops the scroll\n\n**Value Proposition:**\n- Core benefit or promise stated\n- How it's positioned\n- Exact wording used\n\n**Tone & Voice:**\n- Overall emotional tone (urgent, aspirational, casual, etc.)\n- Personality traits expressed\n- Language patterns and word choices\n- Emotional triggers employed\n\n**Call-to-Action:**\n- Exact CTA wording\n- Where and when it appears\n- Urgency elements included\n\n### 5. BRANDING ELEMENTS\n\n**Brand Visibility:**\n- When and where the logo appears\n- How long it's visible\n- Size and placement\n\n**Brand Identity:**\n- Brand colors and their usage\n- Visual signatures or style markers\n- Brand voice consistency\n- Memorable branded moments\n\n### 6. STRATEGIC ELEMENTS\n\n**Target Audience:**\n- Who this ad is clearly designed for\n- Demographics and psychographics\n- Specific pain points addressed\n\n**Persuasion Tactics:**\n- Social proof elements (testimonials, stats, reviews)\n- Authority markers\n- Scarcity or urgency tactics\n- Problem-solution framing\n\n**Objection Handling:**\n- What concerns are preemptively addressed\n- How trust is built\n\n### 7. RECREATION BLUEPRINT\n\n**Must-Keep Elements:**\n- List the core components that MUST be replicated for success\n- Explain why each is non-negotiable\n\n**Adaptable Elements:**\n- What can be customized for a different brand\n- Where creative flexibility exists\n\n**Technical Requirements:**\n- Aspect ratio and dimensions\n- Estimated production quality needed\n- Equipment or tools required\n- Approximate budget tier (low/medium/high)\n\n**Critical Success Factors:**\n- The 3-5 most important elements that make this ad work\n- Common mistakes to avoid when recreating\n- Key insights for adaptation\n\n## Output Format\n\nWrite in clear, structured paragraphs with headers. Be specific and detailed. Use exact quotes from the ad. Focus on actionable insights that someone could use to recreate this ad's success with a different brand.\n\nBegin your analysis now.",
+        "videoUrls": "={{ $('Loop Over Items').item.json.video }}",
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.googleGemini",
+      "typeVersion": 1,
+      "position": [
+        -688,
+        256
+      ],
+      "id": "6a8dee76-00f5-45fc-994d-92646dba1c72",
+      "name": "Analyze video",
+      "credentials": {
+        "googlePalmApi": {
+          "id": "1n5ypNChE8SL3gvv",
+          "name": "Google Gemini(PaLM) Api account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "base": {
+          "__rl": true,
+          "value": "appQ3yB8XKm5v0QSN",
+          "mode": "list",
+          "cachedResultName": "RSS Content Hub ",
+          "cachedResultUrl": "https://airtable.com/appQ3yB8XKm5v0QSN"
+        },
+        "table": {
+          "__rl": true,
+          "value": "tblBZ3iZlxwGNXfox",
+          "mode": "list",
+          "cachedResultName": "Ecom brand info v1",
+          "cachedResultUrl": "https://airtable.com/appQ3yB8XKm5v0QSN/tblBZ3iZlxwGNXfox"
+        },
+        "id": "reck2r1MwnwhApkiK",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.airtableTool",
+      "typeVersion": 2.1,
+      "position": [
+        -80,
+        432
+      ],
+      "id": "cf874429-805a-4a62-b6f9-9c2630aa51b5",
+      "name": "Get a record in Airtable",
+      "credentials": {
+        "airtableTokenApi": {
+          "id": "B4Kz4cmYvOfFTyKv",
+          "name": "Main RSS Aritable acc"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "operation": "create",
+        "base": {
+          "__rl": true,
+          "value": "appQ3yB8XKm5v0QSN",
+          "mode": "list",
+          "cachedResultName": "RSS Content Hub ",
+          "cachedResultUrl": "https://airtable.com/appQ3yB8XKm5v0QSN"
+        },
+        "table": {
+          "__rl": true,
+          "value": "tbl4WMLtd9IroUvyZ",
+          "mode": "list",
+          "cachedResultName": "Winning ads",
+          "cachedResultUrl": "https://airtable.com/appQ3yB8XKm5v0QSN/tbl4WMLtd9IroUvyZ"
+        },
+        "columns": {
+          "mappingMode": "defineBelow",
+          "value": {
+            "Live": "={{ $('Loop Over Items').item.json.live }}",
+            "AD ID": "={{ $('Loop Over Items').item.json.ad_id }}",
+            "Brand ID": "={{ $('Loop Over Items').item.json.brand_id }}",
+            "Name": "={{ $('Loop Over Items').item.json.name }}",
+            "Description": "={{ $('Loop Over Items').item.json.description }}",
+            "Market Target": "={{ $('Loop Over Items').item.json.market_target }}",
+            "Niches": "={{ $('Loop Over Items').item.json.niches }}",
+            "Product Category": "={{ $('Loop Over Items').item.json.product_category }}",
+            "Link": "={{ $('Loop Over Items').item.json.link_url }}",
+            "Thumbnail link": "={{ $('Loop Over Items').item.json.thumbnail }}",
+            "Publisher Platform": "={{ $('Loop Over Items').item.json.publisher_platform }}",
+            "Display Format": "={{ $('Loop Over Items').item.json.display_format }}",
+            "CTA FORMAT": "={{ $('Loop Over Items').item.json.cta_type }}"
+          },
+          "matchingColumns": [],
+          "schema": [
+            {
+              "id": "AD ID",
+              "displayName": "AD ID",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "string",
+              "readOnly": false,
+              "removed": false
+            },
+            {
+              "id": "Brand ID",
+              "displayName": "Brand ID",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "string",
+              "readOnly": false,
+              "removed": false
+            },
+            {
+              "id": "Name",
+              "displayName": "Name",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "string",
+              "readOnly": false,
+              "removed": false
+            },
+            {
+              "id": "Description",
+              "displayName": "Description",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "string",
+              "readOnly": false,
+              "removed": false
+            },
+            {
+              "id": "Categories",
+              "displayName": "Categories",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "array",
+              "options": [],
+              "readOnly": false,
+              "removed": true
+            },
+            {
+              "id": "Market Target",
+              "displayName": "Market Target",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "options",
+              "options": [],
+              "readOnly": false,
+              "removed": false
+            },
+            {
+              "id": "Niches",
+              "displayName": "Niches",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "array",
+              "options": [],
+              "readOnly": false,
+              "removed": false
+            },
+            {
+              "id": "Product Category",
+              "displayName": "Product Category",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "options",
+              "options": [],
+              "readOnly": false,
+              "removed": false
+            },
+            {
+              "id": "Link",
+              "displayName": "Link",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "string",
+              "readOnly": false,
+              "removed": false
+            },
+            {
+              "id": "Display Format",
+              "displayName": "Display Format",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "options",
+              "options": [],
+              "readOnly": false,
+              "removed": false
+            },
+            {
+              "id": "CTA FORMAT",
+              "displayName": "CTA FORMAT",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "string",
+              "readOnly": false,
+              "removed": false
+            },
+            {
+              "id": "Live",
+              "displayName": "Live",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "boolean",
+              "readOnly": false,
+              "removed": false
+            },
+            {
+              "id": "Publisher Platform",
+              "displayName": "Publisher Platform",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "array",
+              "options": [],
+              "readOnly": false,
+              "removed": false
+            },
+            {
+              "id": "Thumbnail link",
+              "displayName": "Thumbnail link",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "string",
+              "readOnly": false,
+              "removed": false
+            }
+          ],
+          "attemptToConvertTypes": false,
+          "convertFieldsToString": false
+        },
+        "options": {
+          "typecast": true
+        }
+      },
+      "type": "n8n-nodes-base.airtable",
+      "typeVersion": 2.1,
+      "position": [
+        -512,
+        256
+      ],
+      "id": "c2b11938-55f4-4198-9f73-b3a7b376c9e2",
+      "name": "Create a record",
+      "credentials": {
+        "airtableTokenApi": {
+          "id": "nvGoYm8W5OXPhY3Q",
+          "name": "xyz"
+        }
+      }
+    }
+  ],
+  "pinData": {},
+  "connections": {
+    "Get Ads": {
+      "main": [
+        [
+          {
+            "node": "Filter",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Get the Transcripts": {
+      "main": [
+        [
+          {
+            "node": "Analyze video",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Loop Over Items": {
+      "main": [
+        [],
+        [
+          {
+            "node": "Get the Transcripts",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Daily Trigger1": {
+      "main": [
+        [
+          {
+            "node": "Competitor #",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Competitor #": {
+      "main": [
+        [
+          {
+            "node": "Get Ads",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "SORA 2 Video Generation1": {
+      "main": [
+        [
+          {
+            "node": "Log to Airtable1",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "Notify Team (Slack)1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Notify Team (Slack)1": {
+      "main": [
+        [
+          {
+            "node": "Loop Over Items",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Anthropic Chat Model3": {
+      "ai_languageModel": [
+        [
+          {
+            "node": "Create  New Winning Ad1",
+            "type": "ai_languageModel",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Create  New Winning Ad1": {
+      "main": [
+        [
+          {
+            "node": "SORA 2 Video Generation1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Analyze video": {
+      "main": [
+        [
+          {
+            "node": "Create a record",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Filter": {
+      "main": [
+        [
+          {
+            "node": "Loop Over Items",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Get a record in Airtable": {
+      "ai_tool": [
+        [
+          {
+            "node": "Create  New Winning Ad1",
+            "type": "ai_tool",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Create a record": {
+      "main": [
+        [
+          {
+            "node": "Create  New Winning Ad1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": false,
+  "settings": {
+    "executionOrder": "v1"
+  },
+  "versionId": "ad1dfbcd-2550-4486-8e78-8c41d78e87c6",
+  "meta": {
+    "templateCredsSetupCompleted": true,
+    "instanceId": "dd8155e8bb87821643e0ed3b047de26590242abd978a838f99a5a1a4adb445d5"
+  },
+  "id": "5krdnkvfzX747H4W",
+  "tags": []
+}
