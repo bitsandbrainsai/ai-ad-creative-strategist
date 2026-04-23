@@ -1,5 +1,22 @@
-<h1>🏷️ Project Title</h1>
-<p><strong>AI Ad Creative Strategist (Foreplay + SORA)</strong></p>
+<div align="center">
+  <img 
+    src="assets/AI Ad Creative Strategist.png" 
+    alt="AI Ad Creative Strategist Logo Animation"
+    width="100%"
+  />
+
+  <h1 style="font-size: 3em; font-weight: 800; margin: 0.4em 0 0;">
+    AI Ad Creative Strategist 
+  </h1>
+
+  <h3 style="margin-top: 0.6em;">
+    Agentic AI for Ad Intelligence, Strategy, and Video Generation  
+  </h3>
+
+  <p>
+    <em>A next-generation, enterprise-grade AI system that transforms fragmented competitor ad data into high-performance, brand-safe video creatives through a fully orchestrated, agentic pipeline. </em>
+  </p>
+</div>
 
 <hr />
 
