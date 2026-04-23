@@ -1,6 +1,6 @@
 <div align="center">
   <img 
-    src="assets/AI Ad Creative Strategist.png" 
+    src="assets/diagrams/AI Ad Creative Strategist.png" 
     alt="AI Ad Creative Strategist Logo Animation"
     width="100%"
   />
